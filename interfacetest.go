@@ -12,9 +12,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
 	"github.com/untillpro/godif"
-	"github.com/untillpro/igoonce/iconfig"
+	"math/rand"
 	"testing"
+	"time"
 )
+
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 var ctx context.Context
 
@@ -49,6 +52,15 @@ type maxTestConfig struct {
 	Param6 map[string]interface{}
 }
 
+func randStringBytes(n int) string {
+	rand.Seed(time.Now().UnixNano())
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
+
 func testBasicUsage(t *testing.T) {
 	require.NotNil(t, ctx, "Need to provide not nil context.Context to TestImpl(context.Context, *ttesting.T)")
 	TestPutGet(t)
@@ -63,10 +75,11 @@ var testConfig1 = testConfig{"ac", 3, true, []string{"assert", "b", "c"},
 
 func TestPutGet(t *testing.T) {
 	defer godif.Reset()
-	err := iconfig.PutCurrentAppConfig(ctx, &testConfig1)
+	prefix := randStringBytes(8)
+	err := PutConfig(ctx, prefix, &testConfig1)
 	require.Nil(t, err, "Can't put test config to KV! Config: ", err)
 	var b testConfig
-	err = iconfig.GetCurrentAppConfig(ctx, &b)
+	err = GetConfig(ctx, prefix, &b)
 	require.Nil(t, err, "Can't get test config from KV! Config: ", err)
 	require.True(t, cmp.Equal(testConfig1, b), "Structs must be equal! ", testConfig1, b)
 	require.False(t, cmp.Equal(&ctx, &b))
@@ -75,37 +88,39 @@ func TestPutGet(t *testing.T) {
 func TestNilConfig(t *testing.T) {
 	defer godif.Reset()
 	var config *testConfig = nil
-	err := iconfig.PutCurrentAppConfig(ctx, config)
+	err := PutConfig(ctx, "", config)
 	require.NotNil(t, err)
 }
 
 func TestNotPointerInGet(t *testing.T) {
 	defer godif.Reset()
 	var b testConfig
-	err := iconfig.GetCurrentAppConfig(ctx, b)
+	err := GetConfig(ctx, "", b)
 	require.NotNil(t, err)
 }
 
 func TestGetWrongStruct(t *testing.T) {
 	defer godif.Reset()
-	err := iconfig.PutCurrentAppConfig(ctx, &testConfig1)
+	prefix := randStringBytes(8)
+	err := PutConfig(ctx, prefix, &testConfig1)
 	require.Nil(t, err, "Can't put test config to KV! Config: ", err)
 
 	//try to unmarshal config to wrong struct
 	var b error
-	err = iconfig.GetCurrentAppConfig(ctx, &b)
+	err = GetConfig(ctx, prefix, &b)
 	require.Nil(t, b)
 	require.NotNil(t, err)
 }
 
 func TestPutGetDifferentStructs(t *testing.T) {
 	defer godif.Reset()
-	err := iconfig.PutCurrentAppConfig(ctx, &testConfig1)
+	prefix := randStringBytes(8)
+	err := PutConfig(ctx, prefix, &testConfig1)
 	require.Nil(t, err, "Can't put test config to KV! Config: ", err)
 
 	var b minTestConfig
 
-	err = iconfig.GetCurrentAppConfig(ctx, &b)
+	err = GetConfig(ctx, prefix, &b)
 	require.Nil(t, err, "Can't get test config from KV! Config: ", err)
 	require.True(t, !cmp.Equal(testConfig1, b), "Structs must be unequal! ", testConfig1, b)
 
@@ -117,7 +132,7 @@ func TestPutGetDifferentStructs(t *testing.T) {
 
 	var c maxTestConfig
 
-	err = iconfig.GetCurrentAppConfig(ctx, &c)
+	err = GetConfig(ctx, prefix, &c)
 	require.Nil(t, err, "Can't get test config from KV! Config: ", err)
 	require.True(t, !cmp.Equal(testConfig1, c), "Structs must be unequal! ", testConfig1, b)
 
