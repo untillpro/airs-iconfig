@@ -11,7 +11,6 @@ import (
 	"context"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/require"
-	"github.com/untillpro/godif"
 	"math/rand"
 	"testing"
 	"time"
@@ -74,7 +73,6 @@ var testConfig1 = testConfig{"ac", 3, true, []string{"assert", "b", "c"},
 	map[string]float64{"assert": 1.1, "b": 2.2}}
 
 func TestPutGet(t *testing.T) {
-	defer godif.Reset()
 	prefix := randStringBytes(8)
 	err := PutConfig(ctx, prefix, &testConfig1)
 	require.Nil(t, err, "Can't put test config to KV! Config: ", err)
@@ -86,21 +84,18 @@ func TestPutGet(t *testing.T) {
 }
 
 func TestNilConfig(t *testing.T) {
-	defer godif.Reset()
 	var config *testConfig = nil
 	err := PutConfig(ctx, "", config)
 	require.NotNil(t, err)
 }
 
 func TestNotPointerInGet(t *testing.T) {
-	defer godif.Reset()
 	var b testConfig
 	err := GetConfig(ctx, "", b)
 	require.NotNil(t, err)
 }
 
 func TestGetWrongStruct(t *testing.T) {
-	defer godif.Reset()
 	prefix := randStringBytes(8)
 	err := PutConfig(ctx, prefix, &testConfig1)
 	require.Nil(t, err, "Can't put test config to KV! Config: ", err)
@@ -113,7 +108,6 @@ func TestGetWrongStruct(t *testing.T) {
 }
 
 func TestPutGetDifferentStructs(t *testing.T) {
-	defer godif.Reset()
 	prefix := randStringBytes(8)
 	err := PutConfig(ctx, prefix, &testConfig1)
 	require.Nil(t, err, "Can't put test config to KV! Config: ", err)
