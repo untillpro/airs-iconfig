@@ -24,7 +24,12 @@ var ctx context.Context
 // Storage must be empty before testing
 func TestImpl(actx context.Context, t *testing.T) {
 	ctx = actx
-	t.Run("TestBasicUsage", testBasicUsage)
+	require.NotNil(t, ctx, "Need to provide not nil context.Context to TestImpl(context.Context, *t testing.T)")
+	t.Run("TestPutGet", TestPutGet)
+	t.Run("TestNilConfig", TestNilConfig)
+	t.Run("TestNotPointerInGet", TestNotPointerInGet)
+	t.Run("TestGetWrongStruct", TestGetWrongStruct)
+	t.Run("TestPutGetDifferentStructs", TestPutGetDifferentStructs)
 }
 
 type testConfig struct {
@@ -58,15 +63,6 @@ func randStringBytes(n int) string {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
 	}
 	return string(b)
-}
-
-func testBasicUsage(t *testing.T) {
-	require.NotNil(t, ctx, "Need to provide not nil context.Context to TestImpl(context.Context, *ttesting.T)")
-	TestPutGet(t)
-	TestNilConfig(t)
-	TestNotPointerInGet(t)
-	TestGetWrongStruct(t)
-	TestPutGetDifferentStructs(t)
 }
 
 var testConfig1 = testConfig{"ac", 3, true, []string{"assert", "b", "c"},

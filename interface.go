@@ -9,10 +9,8 @@ package iconfig
 
 import "context"
 
-// GetConfig returns config with given name
-// Config never will be nil
-// If config does not exist empty map is returned
+// GetConfig returns config struct with given name or error if something went wrong
 var GetConfig func(ctx context.Context, configName string, config interface{}) error
 
-// PutConfig saves config with given name
+// PutConfig saves config struct with given name or returns error if something went wrong
 var PutConfig func(ctx context.Context, configName string, config interface{}) error
