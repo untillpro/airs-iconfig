@@ -26,6 +26,7 @@ func TestImpl(actx context.Context, t *testing.T) {
 	ctx = actx
 	require.NotNil(t, ctx, "Need to provide not nil context.Context to TestImpl(context.Context, *t testing.T)")
 	t.Run("TestPutGet", TestPutGet)
+	t.Run("TestNoConfig", TestNoConfig)
 	t.Run("TestNilConfig", TestNilConfig)
 	t.Run("TestNotPointerInGet", TestNotPointerInGet)
 	t.Run("TestGetWrongStruct", TestGetWrongStruct)
@@ -73,10 +74,18 @@ func TestPutGet(t *testing.T) {
 	err := PutConfig(ctx, prefix, &testConfig1)
 	require.Nil(t, err, "Can't put test config to KV! Config: ", err)
 	var b testConfig
-	err = GetConfig(ctx, prefix, &b)
+	ok, err := GetConfig(ctx, prefix, &b)
+	require.True(t, ok)
 	require.Nil(t, err, "Can't get test config from KV! Config: ", err)
 	require.True(t, cmp.Equal(testConfig1, b), "Structs must be equal! ", testConfig1, b)
 	require.False(t, cmp.Equal(&ctx, &b))
+}
+
+func TestNoConfig(t *testing.T) {
+	prefix := randStringBytes(8)
+	ok, err := GetConfig(ctx, prefix, &struct{}{})
+	require.False(t, ok)
+	require.Nil(t, err)
 }
 
 func TestNilConfig(t *testing.T) {
@@ -87,8 +96,9 @@ func TestNilConfig(t *testing.T) {
 
 func TestNotPointerInGet(t *testing.T) {
 	var b testConfig
-	err := GetConfig(ctx, "", b)
+	ok, err := GetConfig(ctx, "", b)
 	require.NotNil(t, err)
+	require.False(t, ok)
 }
 
 func TestGetWrongStruct(t *testing.T) {
@@ -98,9 +108,10 @@ func TestGetWrongStruct(t *testing.T) {
 
 	//try to unmarshal config to wrong struct
 	var b error
-	err = GetConfig(ctx, prefix, &b)
+	ok, err := GetConfig(ctx, prefix, &b)
 	require.Nil(t, b)
 	require.NotNil(t, err)
+	require.False(t, ok)
 }
 
 func TestPutGetDifferentStructs(t *testing.T) {
@@ -110,7 +121,8 @@ func TestPutGetDifferentStructs(t *testing.T) {
 
 	var b minTestConfig
 
-	err = GetConfig(ctx, prefix, &b)
+	ok, err := GetConfig(ctx, prefix, &b)
+	require.True(t, ok)
 	require.Nil(t, err, "Can't get test config from KV! Config: ", err)
 	require.True(t, !cmp.Equal(testConfig1, b), "Structs must be unequal! ", testConfig1, b)
 
@@ -122,7 +134,8 @@ func TestPutGetDifferentStructs(t *testing.T) {
 
 	var c maxTestConfig
 
-	err = GetConfig(ctx, prefix, &c)
+	ok, err = GetConfig(ctx, prefix, &c)
+	require.True(t, ok)
 	require.Nil(t, err, "Can't get test config from KV! Config: ", err)
 	require.True(t, !cmp.Equal(testConfig1, c), "Structs must be unequal! ", testConfig1, b)
 

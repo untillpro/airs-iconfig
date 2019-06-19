@@ -9,8 +9,9 @@ package iconfig
 
 import "context"
 
-// GetConfig returns config struct with given name or error if something went wrong
-var GetConfig func(ctx context.Context, configName string, config interface{}) error
+// GetConfig fills passed config struct and returns ok == true, ok == false and err == nil if config doesn't
+// exists and ok == false and err != nil if an error occurred
+var GetConfig func(ctx context.Context, configName string, config interface{}) (ok bool, err error)
 
 // PutConfig saves config struct with given name or returns error if something went wrong
 var PutConfig func(ctx context.Context, configName string, config interface{}) error
